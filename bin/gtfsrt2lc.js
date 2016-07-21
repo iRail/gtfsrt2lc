@@ -88,7 +88,7 @@ var onResponse = function (error, response, body) {
         }
 
         
-        var arrivalDelaySeconds  = stop_time.arrival? stop_time.delay : 0;
+        var arrivalDelaySeconds  = stop_time.arrival? stop_time.arrival.delay : 0;
         var departureDelaySeconds  = stop_time.departure? stop_time.departure.delay : arrivalDelaySeconds;
         var mongoId = 'http://irail.be/connections/' 
                       + encodeURIComponent(departureStop)
