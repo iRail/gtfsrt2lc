@@ -97,7 +97,7 @@ var onResponse = function (error, response, body) {
         }
 
         // print object
-        console.log(obj);
+        console.log(JSON.stringify(obj));
       });
       // end foreach
 
