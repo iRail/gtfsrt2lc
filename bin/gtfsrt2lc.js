@@ -51,7 +51,7 @@ var onResponse = function (error, response, body) {
       * Check if train is canceled or not
       */
       var type = getConnectionType(entity);
-
+      
 
       // foreach stop time update
       entity.trip_update.stop_time_update.forEach(function (stop_time, index)
@@ -68,12 +68,28 @@ var onResponse = function (error, response, body) {
         {
           var arrivalStop   = entity.trip_update.stop_time_update[index+1].stop_id.split(':')[0];
         }
+        var arrivalTime = null,
+            departureTime = null;
+        //Check whether arrival time and/or departure time is set
+        if (stop_time.arrival && stop_time.arrival.time && stop_time.arrival.time.low) {
+          arrivalTime = new Date(stop_time.arrival.time.low * 1000);
+        }
+        if (!stop_time.departure || !stop_time.departure.time || !stop_time.departure.time.low) {
+          if (!arrivalTime) {
+            //do nothing: both arrival as departure is not set: this stoptime is skipped?
+          } else {
+            departureTime = arrivalTime;
+          }
+        } else {
+          departureTime = new Date(stop_time.departure.time.low * 1000);
+          if (!arrivalTime) {
+            arrivalTime = departureTime;
+          }
+        }
 
-
-        var arrivalTime   = new Date(stop_time.arrival.time.low * 1000);
-        var departureTime = arrivalTime;
-
-        var delaySeconds  = stop_time.arrival.delay;
+        
+        var arrivalDelaySeconds  = stop_time.arrival? stop_time.delay : 0;
+        var departureDelaySeconds  = stop_time.departure? stop_time.departure.delay : arrivalDelaySeconds;
         var mongoId = 'http://irail.be/connections/' 
                       + encodeURIComponent(departureStop)
                       + 
@@ -88,10 +104,10 @@ var onResponse = function (error, response, body) {
           "@type"           : type,
           "departureStop"   : "http://irail.be/stations/NMBS/00" + departureStop,
           "arrivalStop"     : "http://irail.be/stations/NMBS/00" + arrivalStop,
-          "arrivalTime"     : departureTime.toISOString(),
+          "arrivalTime"     : arrivalTime.toISOString(),
           "departureTime"   : departureTime.toISOString(),
-          "arrivalDelay"    : delaySeconds,
-          "departureDelay"  : delaySeconds,
+          "arrivalDelay"    : arrivalDelaySeconds,
+          "departureDelay"  : departureDelaySeconds,
           "gtfs:trip"       : "http://irail.be/trips/" + trip_id,
           "gtfs:route"      : "https://irail.be/vehicle/?id=" + gtfs_route
         }
