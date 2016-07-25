@@ -12,6 +12,7 @@ var program = require('commander'),
 console.error("GTFS-RT of iRail to linked connections converter use --help to discover more functions");
 
 program
+  .option('-f, --format <format>', 'Format of the output. Possibilities: json (default: json), mongo (extended JSON format to be used with mongoimport)')
   .arguments('<url>', 'URL to gtfs-rt')
   .action(function (urlparam) {
     program.url = url.parse(urlparam);
@@ -115,7 +116,18 @@ var onResponse = function (error, response, body) {
         }
 
         // print object
-        console.log(JSON.stringify(obj));
+        if (!program.format || program.format === "json") {
+          console.log(JSON.stringify(obj));
+        } else if (program.format === "mongo") {
+          obj['departureTime'] = {'$date' : obj['departureTime'] };
+          obj['arrivalTime'] = {'$date' : obj['arrivalTime'] };
+
+          obj['_id'] = obj["@id"];
+          delete obj['@id'];
+          console.log(JSON.stringify(obj));
+        } else {
+          console.error('Format chosen not supported. Choose json or mongo');
+        }
       });
       // end foreach
 
