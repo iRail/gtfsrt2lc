@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^2.9.0",
-    "gtfs-realtime-bindings": "0.0.4"
+    "gtfs-realtime-bindings": "0.0.4",
+    "moment": "^2.14.1",
+    "moment-timezone": "^0.5.4"
   }
 }

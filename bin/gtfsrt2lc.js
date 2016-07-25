@@ -5,6 +5,7 @@ var program = require('commander'),
     zlib = require('zlib'),
     gtfsrt = require('gtfs-realtime-bindings'),
     url = require('url'),
+    moment = require('moment-timezone'),
     fs = require('fs');
 
 
@@ -72,7 +73,7 @@ var onResponse = function (error, response, body) {
             departureTime = null;
         //Check whether arrival time and/or departure time is set
         if (stop_time.arrival && stop_time.arrival.time && stop_time.arrival.time.low) {
-          arrivalTime = new Date(stop_time.arrival.time.low * 1000);
+          arrivalTime = moment(stop_time.arrival.time.low * 1000);
         }
         if (!stop_time.departure || !stop_time.departure.time || !stop_time.departure.time.low) {
           if (!arrivalTime) {
@@ -81,35 +82,36 @@ var onResponse = function (error, response, body) {
             departureTime = arrivalTime;
           }
         } else {
-          departureTime = new Date(stop_time.departure.time.low * 1000);
+          departureTime = moment(stop_time.departure.time.low * 1000);
           if (!arrivalTime) {
             arrivalTime = departureTime;
           }
         }
 
-        
         var arrivalDelaySeconds  = stop_time.arrival? stop_time.arrival.delay : 0;
         var departureDelaySeconds  = stop_time.departure? stop_time.departure.delay : arrivalDelaySeconds;
-        var mongoId = 'http://irail.be/connections/' 
-                      + encodeURIComponent(departureStop)
-                      + 
-                      '/'
-                      +
-                      encodeURIComponent(departureTime.toISOString().substr(0,10))
-                      + '/'
-                      + encodeURIComponent(gtfs_route); 
+
+        var d = new Date(departureTime);
+        var scheduledDepartureTime = moment(d.setSeconds(d.getSeconds() - departureDelaySeconds));
+       // console.log(scheduledDepartureTime);
+        
+
+        var mongoId = 'http://irail.be/connections/' +
+            encodeURIComponent(departureStop) + '/' +
+            encodeURIComponent(scheduledDepartureTime.tz('Europe/Brussels').format().substr(0,10).replace(/[-:]/g,'')) + '/' +
+            encodeURIComponent(gtfs_route); 
 
         var obj = {
           "@id"             : mongoId,
           "@type"           : type,
           "departureStop"   : "http://irail.be/stations/NMBS/00" + departureStop,
           "arrivalStop"     : "http://irail.be/stations/NMBS/00" + arrivalStop,
-          "arrivalTime"     : arrivalTime.toISOString(),
-          "departureTime"   : departureTime.toISOString(),
+          "arrivalTime"     : arrivalTime.format(),
+          "departureTime"   : departureTime.format(),
           "arrivalDelay"    : arrivalDelaySeconds,
           "departureDelay"  : departureDelaySeconds,
           "gtfs:trip"       : "http://irail.be/trips/" + trip_id,
-          "gtfs:route"      : "https://irail.be/vehicle/?id=" + gtfs_route
+          "gtfs:route"      : "https://irail.be/vehicle/" + gtfs_route
         }
 
         // print object
