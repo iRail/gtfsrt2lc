@@ -112,7 +112,7 @@ var onResponse = function (error, response, body) {
           "arrivalDelay"    : arrivalDelaySeconds,
           "departureDelay"  : departureDelaySeconds,
           "gtfs:trip"       : "http://irail.be/trips/" + trip_id,
-          "gtfs:route"      : "https://irail.be/vehicle/" + gtfs_route
+          "gtfs:route"      : "http://irail.be/vehicle/" + gtfs_route
         }
 
         // print object
